@@ -16,6 +16,7 @@ const reloadIcon = document.querySelector('.fa'); //the reload button at the top
 form.addEventListener('submit', addNewTask);
 // // Clear All Tasks
 clearBtn.addEventListener('click', clearAllTasks);
+filter.addEventListener('keyup', filterTasks)
 // //   Filter Task 
 // filter.addEventListener('keyup', filterTasks);
 // // Remove task event [event delegation]
@@ -123,7 +124,7 @@ function addNewTask(e) {
      
      <i class="fa fa-remove"></i>
                 &nbsp;
-                <a href="/Task Manager/edit.html?id=${cursor.value.id}"><i class="fa fa-edit"></i> </a>
+                <a href="./edit.html?id=${cursor.value.id}"><i class="fa fa-edit"></i> </a>
      
      `;
      
@@ -176,6 +177,51 @@ clearBtn.addEventListener('click', clearAllTasks);
             }
         }
     }
+
+    function filterTasks(e) {
+        let transaction = DB.transaction(['tasks'], 'readwrite');
+        let objectStore = transaction.objectStore('tasks');
+        while (taskList.firstChild) {
+            taskList.removeChild(taskList.firstChild);
+          }
+
+          objectStore.openCursor().onsuccess = function(e){
+              const cursor = e.target.result
+              const searchItem = filter.value
+
+              if(cursor){
+                  if(cursor.value.taskname.indexOf(searchItem)){
+
+                  } else{
+                    const li = document.createElement("li");
+                    li.setAttribute("data-task-id", cursor.value.id);
+                    li.className = "collection-item";
+                    li.appendChild(document.createTextNode(cursor.value.taskname));
+                    const link = document.createElement("a");
+
+                    link.className = "delete-item secondary-content";
+                    link.innerHTML = `
+                           <i class="fa fa-remove"></i>
+                          &nbsp;
+                          <a href="./edit.html?id=${cursor.value.id}"><i class="fa fa-edit"></i> </a>
+                          `;
+                    // Append link to li
+                    li.appendChild(link);
+                    // Append to UL
+                    taskList.appendChild(li);
+                  } cursor.continue();
+
+              }
+          }
+
+          }
+        
+    
+        
+    
+        // console.log("Task Filter ...");
+    
+    
 
 
 
