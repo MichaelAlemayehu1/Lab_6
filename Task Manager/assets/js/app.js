@@ -6,6 +6,8 @@ const taskList = document.querySelector('.collection'); //The UL
 const clearBtn = document.querySelector('.clear-tasks'); //the all task clear button
 
 const reloadIcon = document.querySelector('.fa'); //the reload button at the top navigation 
+const Asc = document.querySelector(".sortAsc");
+const Desc = document.querySelector(".sortDesc");
 
 // // DOM load event 
 // document.addEventListener('DOMContentLoaded', loadTasksfromDB);
@@ -17,6 +19,8 @@ form.addEventListener('submit', addNewTask);
 // // Clear All Tasks
 clearBtn.addEventListener('click', clearAllTasks);
 filter.addEventListener('keyup', filterTasks)
+Asc.addEventListener("click", displayTaskList);
+Desc.addEventListener("click", sort);
 // //   Filter Task 
 // filter.addEventListener('keyup', filterTasks);
 // // Remove task event [event delegation]
@@ -66,17 +70,34 @@ TasksDB.onupgradeneeded = function(e) {
 });
 // add
 function addNewTask(e) { 
+  e.preventDefault();
     if(!taskInput.value){
-    alert("enter task");
+      taskInput.style.borderColor = "red";;
     return;
 
-}  e.preventDefault();
+}  let today = new Date();
+let dateText =
+  today.getFullYear() +
+  "-" +
+  today.getMonth() +
+  "-" +
+  today.getDate() +
+  " " +
+  today.getHours() +
+  ":" +
+  today.getMinutes() +
+  ":" +
+  today.getSeconds() +
+  ":" +
+  today.getMilliseconds();
+let newTask = {
+  taskname: taskInput.value,
+  taskDate: dateText,
+};
 
         // create a new object with the form info
        
-        let newTask = {
-            taskname: taskInput.value
-        }
+        
         // Insert the object into the database 
         let transaction = DB.transaction(['tasks'], 'readwrite');
         let objectStore = transaction.objectStore('tasks');
@@ -99,7 +120,8 @@ function addNewTask(e) {
 
     // create the object store
     let objectStore = DB.transaction('tasks').objectStore('tasks');
-
+    let x;
+    let y = [];
     objectStore.openCursor().onsuccess = function(e) {
         // assign the current cursor
         let cursor = e.target.result;
@@ -108,14 +130,21 @@ function addNewTask(e) {
             
              // Create an li element when the user adds a task 
      const li = document.createElement('li');
+      // Create text node and append it 
+      li.setAttribute('data-task-id', cursor.value.id);
      // Adding a class
      li.className = 'collection-item';
      
-     // Create text node and append it 
-     li.setAttribute('data-task-id', cursor.value.id);
+    
                 // Create text node and append it 
     li.appendChild(document.createTextNode(cursor.value.taskname));
-     
+    x = {
+      taskName: cursor.value.taskname,
+      taskDate: cursor.value.taskDate,
+    };
+
+    y.push(JSON.stringify(x));
+  
      // Create new element for the link 
      const link = document.createElement('a');
      // Add class and the x marker for a 
@@ -127,8 +156,11 @@ function addNewTask(e) {
                 <a href="./edit.html?id=${cursor.value.id}"><i class="fa fa-edit"></i> </a>
      
      `;
+
+   
+  
      
-     
+    
      // Append link to li
      li.appendChild(link);
        taskList.appendChild(li);    
@@ -215,6 +247,85 @@ clearBtn.addEventListener('click', clearAllTasks);
           }
 
           }
+  
+
+
+
+ function sort() {
+            let tasks = [];
+            let cursor;
+            let readRequest = DB.transaction(["tasks"])
+              .objectStore("tasks")
+              .openCursor();
+        
+            readRequest.onerror = function () {
+              console.log("Error Reading");
+            };
+        
+            readRequest.onsuccess = function (e) {
+              cursor = e.target.result;
+        
+              if (cursor) {
+                tasks.push(cursor.value);
+                cursor.continue();
+              }
+            };
+        
+            setTimeout(() => {
+              let sortedArray = Array.from(bubbleSortD(tasks));
+              while (taskList.firstChild) {
+                taskList.removeChild(taskList.firstChild);
+              }
+        
+              for (let i = 0; i < sortedArray.length; i++) {
+                const li = document.createElement("li");
+                //add Attribute for delete
+                li.setAttribute("data-task-id", sortedArray[i].id);
+                li.className = "collection-item";
+                // Create text node and append it
+        
+                li.appendChild(document.createTextNode(sortedArray[i].taskname));
+
+        
+                // Create new element for the link
+                const link = document.createElement("a");
+                // Add class and the x marker for a
+                link.className = "delete-item secondary-content";
+                link.innerHTML = `
+                        <i class="fa fa-remove"></i>
+                       &nbsp;
+                       <a href="../../edit.html?id=${sortedArray[i].id}"><i class="fa fa-edit"></i> </a>
+                       `;
+                // Append link to li
+                li.appendChild(link);
+                // Append to UL
+                taskList.appendChild(li);
+              }
+            }, 100);
+
+            
+   }
+              
+          
+          
+  
+
+
+
+ function bubbleSortD(arr) {
+  var len = arr.length;
+  for (var i = len - 1; i >= 0; i--) {
+      for (var j = 1; j <= i; j++) {
+         if (arr[j - 1].taskDate < arr[j].taskDate) {
+            var temp = arr[j - 1];
+              arr[j - 1] = arr[j];
+              arr[j] = temp;
+                }
+              }
+            }
+            return arr;
+          }
+
         
     
         
